@@ -29,54 +29,66 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
 // LOAD TASKS
   function loadTodos() {
 
+  // Force fresh fetch (no cache)
+  const t = new Date().getTime();
+
   Promise.all([
-    fetch(TASK_URL).then(res => res.json()),
-    fetch(COMPLETED_URL).then(res => res.json())
+    fetch(TASK_URL + "?t=" + t).then(res => res.json()),
+    fetch(COMPLETED_URL + "?t=" + t).then(res => res.json())
   ])
   .then(([tasks, completed]) => {
 
-    let list = document.getElementById("todo-list");
+    console.log("TASKS:", tasks);
+    console.log("COMPLETED:", completed);
+
+    const list = document.getElementById("todo-list");
     list.innerHTML = "";
 
-    let today = new Date();
+    // Create fast lookup set
+    const completedSet = new Set(
+      completed.map(item => String(item.ID).trim())
+    );
 
-    let completedIDs = completed.map(item => String(item.ID));
+    const today = new Date();
 
     tasks.forEach(row => {
 
-      let taskID = String(row.ID);
+      const taskID = String(row.ID).trim();
 
-      // ✅ ONLY backend controls visibility
-      if (completedIDs.includes(taskID)) return;
+      // ✅ Skip completed tasks ONLY based on sheet
+      if (completedSet.has(taskID)) return;
 
-      // DATE FILTER
-      let parts = row.Date.split("/");
-      let sheetDate = new Date(
+      // ✅ Date parsing (robust)
+      const parts = row.Date.split("/");
+      if (parts.length !== 2) return;
+
+      const sheetDate = new Date(
         today.getFullYear(),
-        parts[0] - 1,
-        parts[1]
+        parseInt(parts[0]) - 1,
+        parseInt(parts[1])
       );
 
       if (today.toDateString() !== sheetDate.toDateString()) return;
 
-      let li = document.createElement("li");
+      // UI
+      const li = document.createElement("li");
       li.className = "list-group-item d-flex justify-content-between align-items-center";
 
-      let text = document.createElement("span");
+      const text = document.createElement("span");
       text.innerText = row.Task;
 
-      let checkbox = document.createElement("input");
+      const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
 
       checkbox.onchange = () => completeTask(row, li);
 
       li.appendChild(text);
       li.appendChild(checkbox);
-
       list.appendChild(li);
     });
 
-  });
+  })
+  .catch(err => console.error("LOAD ERROR:", err));
 }
 /*function loadTodos() {
 
