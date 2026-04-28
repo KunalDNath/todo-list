@@ -88,14 +88,16 @@ function loadTodos() {
 // ==========================
 function completeTask(row, li) {
 
-  const formData = new URLSearchParams();
-  formData.append("id", row.ID);
-  formData.append("task", row.Task);
-  formData.append("date", row.Date);
-
   fetch(API_URL, {
     method: "POST",
-    body: formData
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      id: row.ID,
+      task: row.Task,
+      date: row.Date
+    })
   })
   .then(res => res.text())
   .then(data => console.log("Saved:", data))
