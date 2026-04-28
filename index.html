@@ -141,7 +141,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
     });
 }*/
 // COMPLETE TASK
-  function completeTask(row, li) {
+function completeTask(row, li) {
 
   fetch(API_URL, {
     method: "POST",
@@ -149,11 +149,14 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      id: row.ID,
+      id: String(row.ID),
       task: row.Task,
       date: row.Date
     })
-  });
+  })
+  .then(res => res.text())
+  .then(data => console.log("API response:", data))
+  .catch(err => console.error("POST error:", err));
 
   li.remove();
 }
