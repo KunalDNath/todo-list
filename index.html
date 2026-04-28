@@ -27,68 +27,8 @@ const COMPLETED_URL = "https://opensheet.elk.sh/1NiISDATm9eVs30wIMV54oB3iWzc0725
 const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_KygSttcOeYTTFKOF9NIEA66wd3TE8sPKR_j8Ka9sxfdYYg4/exec";
 
 // LOAD TASKS
- function loadTodos() {
 
-  const t = new Date().getTime(); // prevents caching
-
-  Promise.all([
-    fetch(TASK_URL + "?t=" + t).then(res => res.json()),
-    fetch(COMPLETED_URL + "?t=" + t).then(res => res.json())
-  ])
-  .then(([tasks, completed]) => {
-
-    const list = document.getElementById("todo-list");
-    list.innerHTML = "";
-
-    const completedSet = new Set(
-      completed.map(item => String(item.ID).trim())
-    );
-
-    const today = new Date();
-
-    tasks.forEach(row => {
-
-      const taskID = String(row.ID).trim();
-
-      // ❌ Skip completed tasks
-      if (completedSet.has(taskID)) return;
-
-      // ✅ Date filter (supports 4/28 format)
-      const parts = row.Date.split("/");
-      if (parts.length !== 2) return;
-
-      const sheetDate = new Date(
-        today.getFullYear(),
-        parseInt(parts[0]) - 1,
-        parseInt(parts[1])
-      );
-
-      if (today.toDateString() !== sheetDate.toDateString()) return;
-
-      // UI
-      const li = document.createElement("li");
-      li.className = "list-group-item d-flex justify-content-between align-items-center";
-
-      const text = document.createElement("span");
-      text.innerText = row.Task;
-
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-
-      // ✅ Reliable event binding
-      checkbox.addEventListener("change", function () {
-        completeTask(row, li);
-      });
-
-      li.appendChild(text);
-      li.appendChild(checkbox);
-      list.appendChild(li);
-    });
-
-  })
-  .catch(err => console.error("Load error:", err));
-}
-/*function loadTodos() {
+function loadTodos() {
 
   fetch(TASK_URL)
     .then(res => res.json())
@@ -137,28 +77,9 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
       });
 
     });
-}*/
+}
 // COMPLETE TASK
 function completeTask(row, li) {
-
-  fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      id: String(row.ID),
-      task: row.Task,
-      date: row.Date
-    })
-  })
-  .then(res => res.text())
-  .then(data => console.log("API response:", data))
-  .catch(err => console.error("POST error:", err));
-
-  li.remove();
-}
-/*function completeTask(row, li) {
 
   let taskID = String(row.ID);
 
@@ -177,7 +98,7 @@ function completeTask(row, li) {
 
   // ✅ Remove from UI
   li.remove();
-}*/
+}
 
 // DASHBOARD
 function loadDashboard() {
