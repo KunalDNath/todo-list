@@ -1,150 +1,5 @@
+
 <!DOCTYPE html>
-<html>
-<head>
-  <title>Daily Tasks</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-
-<body class="bg-light">
-
-<div class="container mt-4">
-
-  <h2>Soumi's Daily Tasks</h2>
-  <button class="btn btn-secondary mb-3" onclick="loadDashboard()">📊 Dashboard</button>
-
-  <ul id="todo-list" class="list-group mb-4"></ul>
-
-  <div id="dashboard"></div>
-
-</div>
-
-<script>
-
-// 🔗 YOUR LINKS
-const TASK_URL = "https://opensheet.elk.sh/1NiISDATm9eVs30wIMV54oB3iWzc07258UXUUb5kHJdI/Sheet1";
-const COMPLETED_URL = "https://opensheet.elk.sh/1NiISDATm9eVs30wIMV54oB3iWzc07258UXUUb5kHJdI/Completed";
-const API_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
-
-// ==========================
-// LOAD TASKS
-// ==========================
-function loadTodos() {
-
-  Promise.all([
-    fetch(TASK_URL).then(res => res.json()),
-    fetch(COMPLETED_URL).then(res => res.json())
-  ])
-  .then(([tasks, completed]) => {
-
-    let list = document.getElementById("todo-list");
-    list.innerHTML = "";
-
-    let today = new Date();
-
-    // ✅ completed IDs
-    let completedIDs = completed.map(item => String(item.ID));
-
-    tasks.forEach(row => {
-
-      let taskID = String(row.ID);
-
-      // ❌ Skip completed
-      if (completedIDs.includes(taskID)) return;
-
-      // ✅ DATE FILTER (supports 4/27 format)
-      let parts = row.Date.split("/");
-      let sheetDate = new Date(
-        today.getFullYear(),
-        parts[0] - 1,
-        parts[1]
-      );
-
-      if (today.toDateString() !== sheetDate.toDateString()) return;
-
-      // UI
-      let li = document.createElement("li");
-      li.className = "list-group-item d-flex justify-content-between align-items-center";
-
-      let text = document.createElement("span");
-      text.innerText = row.Task;
-
-      let checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-
-      checkbox.onchange = () => completeTask(row, li);
-
-      li.appendChild(text);
-      li.appendChild(checkbox);
-
-      list.appendChild(li);
-    });
-
-  })
-  .catch(err => console.error("Error:", err));
-}
-
-// ==========================
-// COMPLETE TASK
-// ==========================
-function completeTask(row, li) {
-
-  fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      id: row.ID,
-      task: row.Task,
-      date: row.Date
-    })
-  })
-  .then(res => res.text())
-  .then(data => console.log("Saved:", data))
-  .catch(err => console.error("Error:", err));
-
-  li.remove();
-}
-// ==========================
-// DASHBOARD
-// ==========================
-function loadDashboard() {
-
-  fetch(COMPLETED_URL)
-    .then(res => res.json())
-    .then(data => {
-
-      let grouped = {};
-
-      data.forEach(row => {
-        if (!grouped[row.Date]) grouped[row.Date] = [];
-        grouped[row.Date].push(row.Task);
-      });
-
-      let html = "<h3>Completed Tasks</h3>";
-
-      for (let date in grouped) {
-        html += `<h5>${date}</h5><ul>`;
-        grouped[date].forEach(t => {
-          html += `<li>${t}</li>`;
-        });
-        html += "</ul>";
-      }
-
-      document.getElementById("dashboard").innerHTML = html;
-    });
-}
-
-// ==========================
-// AUTO LOAD
-// ==========================
-window.onload = loadTodos;
-
-</script>
-
-</body>
-</html>
-<!--<!DOCTYPE html>
 <html>
 <head>
   <title>Soumi's Daily Tasks</title>
@@ -172,61 +27,7 @@ const COMPLETED_URL = "https://opensheet.elk.sh/1NiISDATm9eVs30wIMV54oB3iWzc0725
 const API_URL = "https://script.google.com/macros/s/AKfycbw93TNC8600VMoVj9nCqGWSHkm-Ze5MDzc0UEw3V6QKt8BWdm0CMwYunIhHSNlIODP8/exec";
 
 // LOAD TASKS
- function loadTodos() {
-
-  Promise.all([
-    fetch(TASK_URL).then(res => res.json()),
-    fetch(COMPLETED_URL).then(res => res.json())
-  ])
-  .then(([tasks, completed]) => {
-
-    let list = document.getElementById("todo-list");
-    list.innerHTML = "";
-
-    let today = new Date();
-
-    // ✅ Get completed IDs from sheet ONLY
-    let completedIDs = completed.map(item => String(item.ID));
-
-    tasks.forEach(row => {
-
-      let taskID = String(row.ID);
-
-      // ❌ ONLY skip if in completed sheet
-      if (completedIDs.includes(taskID)) return;
-
-      // ✅ DATE FILTER (for 4/28 format)
-      let parts = row.Date.split("/");
-      let sheetDate = new Date(
-        today.getFullYear(),
-        parts[0] - 1,
-        parts[1]
-      );
-
-      if (today.toDateString() !== sheetDate.toDateString()) return;
-
-      // ✅ UI
-      let li = document.createElement("li");
-      li.className = "list-group-item d-flex justify-content-between align-items-center";
-
-      let text = document.createElement("span");
-      text.innerText = row.Task;
-
-      let checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-
-      checkbox.onchange = () => completeTask(row, li);
-
-      li.appendChild(text);
-      li.appendChild(checkbox);
-
-      list.appendChild(li);
-    });
-
-  })
-  .catch(err => console.error("Error loading tasks:", err));
-}
-/*function loadTodos() {
+function loadTodos() {
 
   fetch(TASK_URL)
     .then(res => res.json())
@@ -275,22 +76,9 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw93TNC8600VMoVj9nCqGWS
       });
 
     });
-}*/
-// COMPLETE TASK
-function completeTask(row, li) {
-
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      id: row.ID,
-      task: row.Task,
-      date: row.Date
-    })
-  });
-
-  li.remove();
 }
-/*  
+// COMPLETE TASK
+
 function completeTask(row, li) {
 
   let taskID = String(row.ID);
@@ -306,7 +94,7 @@ function completeTask(row, li) {
       task: row.Task,
       date: row.Date
     })
-  });*/
+  });
 
   // ✅ Remove from UI
   li.remove();
@@ -345,4 +133,4 @@ loadTodos();
 </script>
 
 </body>
-</html>-->
+</html>
