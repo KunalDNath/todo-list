@@ -29,10 +29,16 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
 // LOAD TASKS
 
 function loadTodos() {
+const t = new Date().getTime();   // 👈 ADD THIS
 
-  fetch(TASK_URL)
+  Promise.all([
+    fetch(TASK_URL + "?t=" + t, { cache: "no-store" }).then(res => res.json()),
+    fetch(COMPLETED_URL + "?t=" + t, { cache: "no-store" }).then(res => res.json())
+  ])
+  .then(([tasks, completed]) => {
+  /*fetch(TASK_URL)
     .then(res => res.json())
-    .then(data => {
+    .then(data => {*/
 
       let list = document.getElementById("todo-list");
       list.innerHTML = "";
