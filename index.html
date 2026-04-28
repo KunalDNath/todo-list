@@ -28,8 +28,74 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz118cwdhlFFCFLVyq4NwYi
 
 // LOAD TASKS
 
-// LOAD TASKS
 function loadTodos() {
+
+  Promise.all([
+    fetch(TASK_URL).then(res => res.json()),
+    fetch(COMPLETED_URL).then(res => res.json())
+  ])
+  .then(([tasks, completed]) => {
+
+    let list = document.getElementById("todo-list");
+    list.innerHTML = "";
+
+    let today = new Date();
+
+    // ✅ normalize completed IDs
+    let completedSet = new Set(
+      completed.map(item => String(item.ID).trim())
+    );
+
+    tasks.forEach(row => {
+
+      let taskID = String(row.ID).trim();
+
+      // ❌ skip if already completed
+      if (completedSet.has(taskID)) return;
+
+      // ✅ DATE FILTER
+      let parts = row.Date.split("/");
+      let sheetDate = new Date(
+        today.getFullYear(),
+        parseInt(parts[0]) - 1,
+        parseInt(parts[1])
+      );
+
+      if (today.toDateString() !== sheetDate.toDateString()) return;
+
+      // UI
+      let li = document.createElement("li");
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+      let text = document.createElement("span");
+      text.innerText = row.Task;
+
+      let checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+
+      // ✅ CONFIRMATION ADDED (ONLY CHANGE)
+      checkbox.addEventListener("change", function () {
+
+        let confirmAction = confirm(`Mark "${row.Task}" as completed?`);
+
+        if (!confirmAction) {
+          checkbox.checked = false;
+          return;
+        }
+
+        completeTask(row, li);
+      });
+
+      li.appendChild(text);
+      li.appendChild(checkbox);
+
+      list.appendChild(li);
+    });
+
+  })
+  .catch(err => console.error("Error loading tasks:", err));
+}
+/*function loadTodos() {
 
   Promise.all([
     fetch(TASK_URL).then(res => res.json()),
@@ -86,7 +152,7 @@ function loadTodos() {
 
   })
   .catch(err => console.error("Error loading tasks:", err));
-}
+}*/
 // COMPLETE TASK
 function completeTask(row, li) {
 
