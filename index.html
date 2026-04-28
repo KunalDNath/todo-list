@@ -26,7 +26,7 @@ const COMPLETED_URL = "https://opensheet.elk.sh/1NiISDATm9eVs30wIMV54oB3iWzc0725
 const API_URL = "https://script.google.com/macros/s/AKfycbw93TNC8600VMoVj9nCqGWSHkm-Ze5MDzc0UEw3V6QKt8BWdm0CMwYunIhHSNlIODP8/exec";
 
 // LOAD TASKS
-  function loadTodos() {
+ function loadTodos() {
 
   Promise.all([
     fetch(TASK_URL).then(res => res.json()),
@@ -39,21 +39,17 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw93TNC8600VMoVj9nCqGWS
 
     let today = new Date();
 
+    // ✅ Get completed IDs from sheet ONLY
     let completedIDs = completed.map(item => String(item.ID));
 
     tasks.forEach(row => {
 
       let taskID = String(row.ID);
 
-      // ✅ If completed in backend OR local → skip
-      if (
-        completedIDs.includes(taskID) ||
-        localStorage.getItem("done_" + taskID) === "true"
-      ) {
-        return;
-      }
+      // ❌ ONLY skip if in completed sheet
+      if (completedIDs.includes(taskID)) return;
 
-      // DATE FILTER
+      // ✅ DATE FILTER (for 4/28 format)
       let parts = row.Date.split("/");
       let sheetDate = new Date(
         today.getFullYear(),
@@ -63,7 +59,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw93TNC8600VMoVj9nCqGWS
 
       if (today.toDateString() !== sheetDate.toDateString()) return;
 
-      // UI
+      // ✅ UI
       let li = document.createElement("li");
       li.className = "list-group-item d-flex justify-content-between align-items-center";
 
@@ -81,7 +77,8 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw93TNC8600VMoVj9nCqGWS
       list.appendChild(li);
     });
 
-  });
+  })
+  .catch(err => console.error("Error loading tasks:", err));
 }
 /*function loadTodos() {
 
@@ -136,12 +133,6 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw93TNC8600VMoVj9nCqGWS
 // COMPLETE TASK
 function completeTask(row, li) {
 
-  let taskID = String(row.ID);
-
-  // ✅ Save locally
-  localStorage.setItem("done_" + taskID, "true");
-
-  // ✅ Save to backend
   fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
