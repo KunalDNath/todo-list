@@ -29,8 +29,6 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
 // LOAD TASKS
 
 function loadTodos() {
-const t = new Date().getTime();   // 👈 ADD THIS
-
   
   fetch(TASK_URL)
     .then(res => res.json())
