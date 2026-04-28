@@ -29,54 +29,64 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
 // LOAD TASKS
 
 function loadTodos() {
-  
-  fetch(TASK_URL)
-    .then(res => res.json())
-    .then(data => {
 
-      let list = document.getElementById("todo-list");
-      list.innerHTML = "";
+  const t = new Date().getTime(); // avoid cache
 
-      let today = new Date();
+  Promise.all([
+    fetch(TASK_URL + "?t=" + t).then(res => res.json()),
+    fetch(COMPLETED_URL + "?t=" + t).then(res => res.json())
+  ])
+  .then(([tasks, completed]) => {
 
-      data.forEach(row => {
+    let list = document.getElementById("todo-list");
+    list.innerHTML = "";
 
-        let taskID = String(row.ID);
+    let today = new Date();
 
-        // ✅ CHECK LOCAL STORAGE FIRST
-        if (localStorage.getItem("done_" + taskID) === "true") {
-          return;
-        }
+    // ✅ Create set of completed TASK NAMES
+    let completedTasks = new Set(
+      completed.map(item => String(item.Task).trim().toLowerCase())
+    );
 
-        // ✅ DATE CHECK
-        let parts = row.Date.split("/");
-        let sheetDate = new Date(
-          today.getFullYear(),
-          parts[0] - 1,
-          parts[1]
-        );
+    tasks.forEach(row => {
 
-        if (today.toDateString() !== sheetDate.toDateString()) return;
+      let taskName = String(row.Task).trim().toLowerCase();
 
-        // UI
-        let li = document.createElement("li");
-        li.className = "list-group-item d-flex justify-content-between align-items-center";
+      // ❌ Skip if task already completed
+      if (completedTasks.has(taskName)) return;
 
-        let text = document.createElement("span");
-        text.innerText = row.Task;
+      // ✅ DATE CHECK
+      let parts = row.Date.split("/");
+      let sheetDate = new Date(
+        today.getFullYear(),
+        parts[0] - 1,
+        parts[1]
+      );
 
-        let checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
+      if (today.toDateString() !== sheetDate.toDateString()) return;
 
-        checkbox.onchange = () => completeTask(row, li);
+      // UI
+      let li = document.createElement("li");
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
 
-        li.appendChild(text);
-        li.appendChild(checkbox);
+      let text = document.createElement("span");
+      text.innerText = row.Task;
 
-        list.appendChild(li);
+      let checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+
+      checkbox.addEventListener("change", function () {
+        completeTask(row, li);
       });
 
+      li.appendChild(text);
+      li.appendChild(checkbox);
+
+      list.appendChild(li);
     });
+
+  })
+  .catch(err => console.error("Error:", err));
 }
 // COMPLETE TASK
 function completeTask(row, li) {
