@@ -90,12 +90,18 @@ function completeTask(row, li) {
 
   fetch(API_URL, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       id: row.ID,
       task: row.Task,
       date: row.Date
     })
-  });
+  })
+  .then(res => res.text())
+  .then(data => console.log("Saved:", data))
+  .catch(err => console.error("Error:", err));
 
   li.remove();
 }
