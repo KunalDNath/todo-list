@@ -27,10 +27,9 @@ const COMPLETED_URL = "https://opensheet.elk.sh/1NiISDATm9eVs30wIMV54oB3iWzc0725
 const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_KygSttcOeYTTFKOF9NIEA66wd3TE8sPKR_j8Ka9sxfdYYg4/exec";
 
 // LOAD TASKS
-  function loadTodos() {
+ function loadTodos() {
 
-  // Force fresh fetch (no cache)
-  const t = new Date().getTime();
+  const t = new Date().getTime(); // prevents caching
 
   Promise.all([
     fetch(TASK_URL + "?t=" + t).then(res => res.json()),
@@ -38,13 +37,9 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
   ])
   .then(([tasks, completed]) => {
 
-    console.log("TASKS:", tasks);
-    console.log("COMPLETED:", completed);
-
     const list = document.getElementById("todo-list");
     list.innerHTML = "";
 
-    // Create fast lookup set
     const completedSet = new Set(
       completed.map(item => String(item.ID).trim())
     );
@@ -55,10 +50,10 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
 
       const taskID = String(row.ID).trim();
 
-      // ✅ Skip completed tasks ONLY based on sheet
+      // ❌ Skip completed tasks
       if (completedSet.has(taskID)) return;
 
-      // ✅ Date parsing (robust)
+      // ✅ Date filter (supports 4/28 format)
       const parts = row.Date.split("/");
       if (parts.length !== 2) return;
 
@@ -80,7 +75,10 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
 
-      checkbox.onchange = () => completeTask(row, li);
+      // ✅ Reliable event binding
+      checkbox.addEventListener("change", function () {
+        completeTask(row, li);
+      });
 
       li.appendChild(text);
       li.appendChild(checkbox);
@@ -88,7 +86,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbz8WmW4DPVxChAWtHcT_Kyg
     });
 
   })
-  .catch(err => console.error("LOAD ERROR:", err));
+  .catch(err => console.error("Load error:", err));
 }
 /*function loadTodos() {
 
@@ -160,7 +158,6 @@ function completeTask(row, li) {
 
   li.remove();
 }
-
 /*function completeTask(row, li) {
 
   let taskID = String(row.ID);
