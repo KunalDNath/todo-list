@@ -36,53 +36,64 @@ function loadTodos() {
   ])
   .then(([tasks, completed]) => {
 
+    // 🔍 DEBUG
+    console.log("TASKS:", tasks);
+    console.log("COMPLETED:", completed);
+
     let list = document.getElementById("todo-list");
     list.innerHTML = "";
 
-    // get completed task names
-    let done = completed.map(x => x.Task);
+    // normalize completed task names
+    let done = completed.map(x => String(x.Task).trim().toLowerCase());
 
     tasks.forEach(row => {
 
-      // ❌ skip if task name already in completed
-      if (done.includes(row.Task)) return;
+      let taskName = String(row.Task).trim().toLowerCase();
 
+      // ❌ skip if already completed
+      if (done.includes(taskName)) return;
+
+      // UI
       let li = document.createElement("li");
-      li.innerText = row.Task;
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+      let text = document.createElement("span");
+      text.innerText = row.Task;
 
       let checkbox = document.createElement("input");
       checkbox.type = "checkbox";
 
       checkbox.onclick = () => completeTask(row, li);
 
+      li.appendChild(text);
       li.appendChild(checkbox);
+
       list.appendChild(li);
     });
 
-  });
+  })
+  .catch(err => console.error("Load Error:", err));
 }
 // COMPLETE TASK
 function completeTask(row, li) {
 
-  let taskID = String(row.ID);
-
-  // ✅ Save locally
-  localStorage.setItem("done_" + taskID, "true");
-
-  // ✅ Send to backend
   fetch(API_URL, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
-      id: row.ID,
+      id: String(row.ID),
       task: row.Task,
       date: row.Date
     })
-  });
+  })
+  .then(res => res.text())
+  .then(data => console.log("Saved:", data))
+  .catch(err => console.error("POST Error:", err));
 
-  // ✅ Remove from UI
   li.remove();
 }
-
 // DASHBOARD
 function loadDashboard() {
 
