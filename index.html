@@ -45,13 +45,13 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw93TNC8600VMoVj9nCqGWS
 
       let taskID = String(row.ID);
 
-      // ✅ If NOT in completed sheet → remove from localStorage
-      if (!completedIDs.includes(taskID)) {
-        localStorage.removeItem("done_" + taskID);
+      // ✅ If completed in backend OR local → skip
+      if (
+        completedIDs.includes(taskID) ||
+        localStorage.getItem("done_" + taskID) === "true"
+      ) {
+        return;
       }
-
-      // ❌ Skip completed
-      if (completedIDs.includes(taskID)) return;
 
       // DATE FILTER
       let parts = row.Date.split("/");
@@ -141,7 +141,7 @@ function completeTask(row, li) {
   // ✅ Save locally
   localStorage.setItem("done_" + taskID, "true");
 
-  // ✅ Send to backend
+  // ✅ Save to backend
   fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
@@ -150,6 +150,26 @@ function completeTask(row, li) {
       date: row.Date
     })
   });
+
+  li.remove();
+}
+/*  
+function completeTask(row, li) {
+
+  let taskID = String(row.ID);
+
+  // ✅ Save locally
+  localStorage.setItem("done_" + taskID, "true");
+
+  // ✅ Send to backend
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      id: row.ID,
+      task: row.Task,
+      date: row.Date
+    })
+  });*/
 
   // ✅ Remove from UI
   li.remove();
